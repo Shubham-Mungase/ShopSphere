@@ -1,0 +1,39 @@
+package com.shopsphere.payment.rest;
+
+import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.shopsphere.payment.dto.PaymentRequestDto;
+import com.shopsphere.payment.dto.PaymentResponseDto;
+import com.shopsphere.payment.service.PaymentService;
+
+@RestController
+@RequestMapping("/payments")
+public class PaymentRest {
+
+	private final PaymentService service;
+
+	public PaymentRest(PaymentService service) {
+		super();
+		this.service = service;
+	}
+
+	@PostMapping
+	public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentRequestDto request) {
+
+		return ResponseEntity.ok(service.createPayment(request));
+	}
+
+	@GetMapping("/{paymentId}")
+	public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable UUID paymentId) {
+		return ResponseEntity.ok(service.getPayment(paymentId));
+	}
+
+}
