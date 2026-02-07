@@ -8,7 +8,6 @@ public class PaymentRequestDto {
 	private UUID orderId;
 	private UUID userId;
 	private BigDecimal amount;
-
 	private String paymentMethod;
 
 	public UUID getOrderId() {

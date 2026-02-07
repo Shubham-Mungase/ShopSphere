@@ -33,7 +33,7 @@ public class OrderEventConsumer {
 		
 		paymentService.createPayment(dto);
 		 
-		  System.out.println("payment initiated with order Id : " + event.getOrderId());
+		System.out.println("payment initiated with order Id : " + event.getOrderId());
 	}
 	
 
