@@ -14,15 +14,23 @@ Asynchronous communication using Kafka
 Distributed transaction handling using Saga Pattern
 
 ## Core Microservices
-Auth Service – User authentication & JWT security
-User Service – User profile & management
-Product Service – Product catalog management
-Cart Service – Shopping cart operations
-Order Service – Order processing
-Payment Service – Payment handling
-Inventory Service – Stock management
-Shipping Service – Shipment processing
-Notification Service – Email/SMS notifications
+<h2 align="center">⚙️ Microservices</h2>
+
+<table align="center">
+  <tr>
+    <th>Service Name</th>
+    <th>Description</th>
+  </tr>
+  <tr><td>Auth Service</td><td>JWT Authentication</td></tr>
+  <tr><td>User Service</td><td>User Management</td></tr>
+  <tr><td>Product Service</td><td>Product Catalog</td></tr>
+  <tr><td>Cart Service</td><td>Cart Operations</td></tr>
+  <tr><td>Order Service</td><td>Order Processing</td></tr>
+  <tr><td>Payment Service</td><td>Payment Handling</td></tr>
+  <tr><td>Inventory Service</td><td>Stock Management</td></tr>
+  <tr><td>Shipping Service</td><td>Shipment Processing</td></tr>
+  <tr><td>Notification Service</td><td>Email/SMS Alerts</td></tr>
+</table>
 
 ## Key Features
 Scalable and loosely coupled architecture
