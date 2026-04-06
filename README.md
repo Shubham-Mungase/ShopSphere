@@ -148,28 +148,53 @@ http://localhost:8080
 </p>
 
 ## 
-## 🔄 Saga Flow (Order Processing)
+##  Saga Flow (Order Processing)
 
 <p align="center">
   <img src="./saga-flow.jpg" width="900"/>
 </p>
 
-### 📌 Flow Explanation
+### Saga Flow Explanation (Choreography-Based)
 
-1. User places an order via Order Service  
-2. Order Service creates order and publishes event to Kafka  
-3. Payment Service processes payment  
-4. On success → Inventory Service updates stock  
-5. Then → Shipping Service handles delivery  
-6. Finally → Notification Service sends confirmation  
+This system follows a **Choreography-based Saga Pattern** using Apache Kafka for asynchronous communication between services.
 
-### ❌ Failure Handling (Saga Rollback)
+###  Order Processing Flow
 
-- If payment fails → Order is cancelled  
-- If inventory fails → Payment is refunded  
-- If shipping fails → Inventory is restored  
+1. User creates an order via **Order Service**
+2. Order is stored with **PENDING** status and an `ORDER_CREATED` event is published (via Outbox pattern)
+3. **Inventory Service** consumes the event and attempts to reserve stock  
+   - On success → publishes `INVENTORY_RESERVED`  
+   - On failure → publishes `INVENTORY_FAILED`
+4. **Payment Service** listens for `INVENTORY_RESERVED` and processes payment  
+   - On success → publishes `PAYMENT_SUCCESS`  
+   - On failure → publishes `PAYMENT_FAILED`
+5. Based on events:
+   - Order Service updates status → **CONFIRMED**
+   - Notification/Shipping flow continues
 
-👉 This ensures data consistency using Saga Pattern.
+---
+
+###  Failure Handling (Compensation Logic)
+
+- If **inventory fails** → Order is marked **CANCELLED**
+- If **payment fails** → Inventory is **released**
+- Compensation events ensure **data consistency across services**
+
+---
+
+###  Key Concepts Used
+
+- **Saga Pattern (Choreography)** – No central coordinator, services react to events  
+- **Apache Kafka** – Event-driven communication using topics:
+  - `order-created-topic`
+  - `inventory-events-topic`
+  - `payment-events-topic`
+- **Outbox Pattern** – Ensures reliable event publishing from Order Service  
+- **Eventual Consistency** – Maintains system consistency across distributed services  
+
+---
+
+ This design ensures **loose coupling, scalability, and fault tolerance** in a distributed microservices environment.
 ##  Author
 
 Shubham Mungase  
