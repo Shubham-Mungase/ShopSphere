@@ -19,17 +19,64 @@ Distributed transaction handling using Saga Pattern
 <table align="center">
   <tr>
     <th>Service Name</th>
-    <th>Description</th>
+    <th>Responsibility</th>
+    <th>Tech Stack</th>
   </tr>
-  <tr><td>Auth Service</td><td>JWT Authentication</td></tr>
-  <tr><td>User Service</td><td>User Management</td></tr>
-  <tr><td>Product Service</td><td>Product Catalog</td></tr>
-  <tr><td>Cart Service</td><td>Cart Operations</td></tr>
-  <tr><td>Order Service</td><td>Order Processing</td></tr>
-  <tr><td>Payment Service</td><td>Payment Handling</td></tr>
-  <tr><td>Inventory Service</td><td>Stock Management</td></tr>
-  <tr><td>Shipping Service</td><td>Shipment Processing</td></tr>
-  <tr><td>Notification Service</td><td>Email/SMS Alerts</td></tr>
+
+  <tr>
+    <td>Auth Service</td>
+    <td>User authentication & JWT security</td>
+    <td>Spring Boot, Spring Security, JWT, MySQL, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>User Service</td>
+    <td>User profile & management</td>
+    <td>Spring Boot, MySQL, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>Product Service</td>
+    <td>Product catalog management</td>
+    <td>Spring Boot, MySQL, Redis, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>Cart Service</td>
+    <td>Shopping cart operations</td>
+    <td>Spring Boot, MongoDB, Redis, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>Order Service</td>
+    <td>Order processing</td>
+    <td>Spring Boot, MySQL, Kafka, Saga Pattern</td>
+  </tr>
+
+  <tr>
+    <td>Payment Service</td>
+    <td>Payment handling</td>
+    <td>Spring Boot, MySQL, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>Inventory Service</td>
+    <td>Stock management</td>
+    <td>Spring Boot, MySQL, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>Shipping Service</td>
+    <td>Shipment processing</td>
+    <td>Spring Boot, MySQL, Kafka</td>
+  </tr>
+
+  <tr>
+    <td>Notification Service</td>
+    <td>Email/SMS notifications</td>
+    <td>Spring Boot, Kafka, Mail API</td>
+  </tr>
+
 </table>
 
 ## Key Features
