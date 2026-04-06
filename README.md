@@ -141,14 +141,36 @@ http://localhost:8080
 - Service discovery → Implemented Eureka Server
 
 
-## 🏗️ Architecture Diagram
+## Architecture Diagram
 
 <p align="center">
   <img src="./architecture.png" width="800"/>
 </p>
 
+## 
+## 🔄 Saga Flow (Order Processing)
 
-## 👨‍💻 Author
+<p align="center">
+  <img src="./saga-flow.jpg" width="900"/>
+</p>
+
+### 📌 Flow Explanation
+
+1. User places an order via Order Service  
+2. Order Service creates order and publishes event to Kafka  
+3. Payment Service processes payment  
+4. On success → Inventory Service updates stock  
+5. Then → Shipping Service handles delivery  
+6. Finally → Notification Service sends confirmation  
+
+### ❌ Failure Handling (Saga Rollback)
+
+- If payment fails → Order is cancelled  
+- If inventory fails → Payment is refunded  
+- If shipping fails → Inventory is restored  
+
+👉 This ensures data consistency using Saga Pattern.
+##  Author
 
 Shubham Mungase  
 Java Backend Developer  
