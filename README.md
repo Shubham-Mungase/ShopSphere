@@ -56,7 +56,8 @@ Distributed transaction handling using Saga Pattern
   <tr>
     <td>Payment Service</td>
     <td>Payment handling</td>
-    <td>Spring Boot, MySQL, Kafka</td>
+    <td>Spring Boot, MySQL, Kafka,
+Razorpay Payment Gateway</td>
   </tr>
 
   <tr>
