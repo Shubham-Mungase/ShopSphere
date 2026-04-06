@@ -68,5 +68,6 @@ eureka:
 logging:
   level:
     '[org.springframework.cloud.gateway]': DEBUG
+    '[com.shopsphere.gateway]': DEBUG
 jwt:
   secret: ABCDEFGHIJZKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()
