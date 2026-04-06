@@ -147,9 +147,8 @@ http://localhost:8080
   <img src="./architecture.png" width="800"/>
 </p>
 
-## 
 ##  Saga Flow (Order Processing)
-
+## Implemented distributed transaction management using Saga Pattern with Kafka-based event choreography.
 <p align="center">
   <img src="./saga-flow.jpg" width="900"/>
 </p>
