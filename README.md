@@ -53,7 +53,7 @@ Advanced monitoring with Prometheus & Grafana
 ## How to Run
 
 ### 1. Clone Repository
-git clone https://github.com/your-username/shopsphere.git
+git clone https://github.com/Shubham-Mungase/shopsphere.git
 
 ### 2. Start Services in Order
 
