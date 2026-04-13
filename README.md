@@ -144,7 +144,7 @@ http://localhost:8080
 ## Architecture Diagram
 
 <p align="center">
-  <img src="./architecture.png" width="800"/>
+  <img src="./Final_Architecture1.png" width="800"/>
 </p>
 
 ##  Saga Flow (Order Processing)
