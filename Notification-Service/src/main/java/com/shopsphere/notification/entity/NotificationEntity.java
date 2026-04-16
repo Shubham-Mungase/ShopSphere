@@ -24,7 +24,7 @@ public class NotificationEntity {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private UUID userId;
 
 	@Column(nullable = false)

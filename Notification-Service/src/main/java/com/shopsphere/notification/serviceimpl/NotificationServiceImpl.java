@@ -30,7 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
 		entity.setMessage(request.getMessage());
 		entity.setUserId(request.getUserId());
 		entity.setEventType(request.getEventType());
-
+		
 		try {
 
 			emailService.sendEmail(request.getEmail(), request.getSubject(), request.getMessage());

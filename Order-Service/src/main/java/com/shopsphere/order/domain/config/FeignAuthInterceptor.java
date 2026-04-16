@@ -1,39 +1,43 @@
 package com.shopsphere.order.domain.config;
 
+import java.util.UUID;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.shopsphere.order.domain.filter.UserContext;
 
 import feign.RequestInterceptor;
-import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 public class FeignAuthInterceptor {
 
-    @Bean
-    public RequestInterceptor requestInterceptor() {
-        return requestTemplate -> {
-            Authentication auth = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication();
+	@Bean
+	public RequestInterceptor internalRequestInterceptor() {
+	    return requestTemplate -> {
 
-            if (auth != null && auth.isAuthenticated()) {
-                HttpServletRequest request =
-                        ((ServletRequestAttributes) RequestContextHolder
-                                .getRequestAttributes())
-                                .getRequest();
+	        // Always mark internal
+	        requestTemplate.header("X-Internal-Request", "true");
 
-                String token = request.getHeader("Authorization");
-                if (token != null) {
-                    requestTemplate.header("Authorization", token);
-                    System.out.println("Feign token forwarded: " + token);
+	        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-                }
-            }
-        };
-    }
+	        if (auth != null && auth.isAuthenticated()) {
+
+	            Object details = auth.getDetails();
+
+	            if (details instanceof UserContext user) {
+	                requestTemplate.header("X-User", user.getUsername());
+	                requestTemplate.header("X-Role", user.getRole());
+	                requestTemplate.header("X-User-Id", user.getUserId().toString());
+	            } else if (details instanceof UUID userId) {
+	                requestTemplate.header("X-User", auth.getName());
+	                requestTemplate.header("X-Role",
+	                        auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""));
+	                requestTemplate.header("X-User-Id", userId.toString());
+	            }
+	        }
+	};
+	}
 }

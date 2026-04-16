@@ -5,83 +5,101 @@ import java.util.UUID;
 
 public class ShipmentResponse {
 
-    private UUID shipmentId;
+	private UUID shipmentId;
 
-    private UUID orderId;
+	private UUID orderId;
 
-    private UUID warehouseId;
+	private UUID warehouseId;
 
-    private String courierPartner;
+	private String courierPartner;
 
-    private String trackingNumber;
+	private String trackingNumber;
+	private UUID productId;
+	private Integer quantity;
 
-    private String status;
+	private String status;
 
-    private LocalDateTime createdAt;
+	public UUID getProductId() {
+		return productId;
+	}
 
-    private LocalDateTime updatedAt;
+	public void setProductId(UUID productId) {
+		this.productId = productId;
+	}
 
-    public UUID getShipmentId() {
-        return shipmentId;
-    }
+	public Integer getQuantity() {
+		return quantity;
+	}
 
-    public void setShipmentId(UUID shipmentId) {
-        this.shipmentId = shipmentId;
-    }
+	public void setQuantity(Integer quantity) {
+		this.quantity = quantity;
+	}
 
-    public UUID getOrderId() {
-        return orderId;
-    }
+	private LocalDateTime createdAt;
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
+	private LocalDateTime updatedAt;
 
-    public UUID getWarehouseId() {
-        return warehouseId;
-    }
+	public UUID getShipmentId() {
+		return shipmentId;
+	}
 
-    public void setWarehouseId(UUID warehouseId) {
-        this.warehouseId = warehouseId;
-    }
+	public void setShipmentId(UUID shipmentId) {
+		this.shipmentId = shipmentId;
+	}
 
-    public String getCourierPartner() {
-        return courierPartner;
-    }
+	public UUID getOrderId() {
+		return orderId;
+	}
 
-    public void setCourierPartner(String courierPartner) {
-        this.courierPartner = courierPartner;
-    }
+	public void setOrderId(UUID orderId) {
+		this.orderId = orderId;
+	}
 
-    public String getTrackingNumber() {
-        return trackingNumber;
-    }
+	public UUID getWarehouseId() {
+		return warehouseId;
+	}
 
-    public void setTrackingNumber(String trackingNumber) {
-        this.trackingNumber = trackingNumber;
-    }
+	public void setWarehouseId(UUID warehouseId) {
+		this.warehouseId = warehouseId;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public String getCourierPartner() {
+		return courierPartner;
+	}
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	public void setCourierPartner(String courierPartner) {
+		this.courierPartner = courierPartner;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public String getTrackingNumber() {
+		return trackingNumber;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public void setTrackingNumber(String trackingNumber) {
+		this.trackingNumber = trackingNumber;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 }

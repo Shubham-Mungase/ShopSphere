@@ -1,117 +1,199 @@
 package com.shopsphere.shipping.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.shopsphere.shipping.enums.ShipmentStatus;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "shipments")
 public class Shipment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID shipmentId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID shipmentId;
 
-    private UUID orderId;
+	private UUID orderId;
 
-    private UUID warehouseId;
+	private UUID warehouseId;
 
-    private String courierPartner;
+	private UUID productId;
+	private Integer quantity;
+	
+	@Embedded
+	@AttributeOverrides({
+	    @AttributeOverride(name = "fullName", column = @Column(name = "address_full_name")),
+	    @AttributeOverride(name = "phone", column = @Column(name = "address_phone")),
+	    @AttributeOverride(name = "city", column = @Column(name = "address_city")),
+	    @AttributeOverride(name = "pincode", column = @Column(name = "address_pincode")),
+	    @AttributeOverride(name = "state", column = @Column(name = "address_state")),
+	    @AttributeOverride(name = "isDefault", column = @Column(name = "address_is_default"))
+	})
+	private ShipmentAddress shipmentAddress;
+	
+	
+	 // ✅ Items inside shipment
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL)
+    private List<ShipmentItem> items;
+    
+    
 
-    private String trackingNumber;
+	public List<ShipmentItem> getItems() {
+		return items;
+	}
 
-    @Enumerated(EnumType.STRING)
-    private ShipmentStatus status;
+	public void setItems(List<ShipmentItem> items) {
+		this.items = items;
+	}
 
-    private LocalDateTime createdAt;
+	public Shipment(UUID shipmentId, UUID orderId, UUID warehouseId, UUID productId, Integer quantity,
+			ShipmentAddress shipmentAddress, List<ShipmentItem> items, String courierPartner, String trackingNumber,
+			ShipmentStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+		super();
+		this.shipmentId = shipmentId;
+		this.orderId = orderId;
+		this.warehouseId = warehouseId;
+		this.productId = productId;
+		this.quantity = quantity;
+		this.shipmentAddress = shipmentAddress;
+		this.items = items;
+		this.courierPartner = courierPartner;
+		this.trackingNumber = trackingNumber;
+		this.status = status;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+	}
 
-    private LocalDateTime updatedAt;
+	public ShipmentAddress getShipmentAddress() {
+		return shipmentAddress;
+	}
 
-    public Shipment() {
-    }
+	public void setShipmentAddress(ShipmentAddress shipmentAddress) {
+		this.shipmentAddress = shipmentAddress;
+	}
 
-    public Shipment(UUID shipmentId, UUID orderId, UUID warehouseId, String courierPartner, String trackingNumber,
-    		ShipmentStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.shipmentId = shipmentId;
-        this.orderId = orderId;
-        this.warehouseId = warehouseId;
-        this.courierPartner = courierPartner;
-        this.trackingNumber = trackingNumber;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
+	public UUID getProductId() {
+		return productId;
+	}
 
-    public UUID getShipmentId() {
-        return shipmentId;
-    }
+	public void setProductId(UUID productId) {
+		this.productId = productId;
+	}
 
-    public void setShipmentId(UUID shipmentId) {
-        this.shipmentId = shipmentId;
-    }
+	public Integer getQuantity() {
+		return quantity;
+	}
 
-    public UUID getOrderId() {
-        return orderId;
-    }
+	public void setQuantity(Integer quantity) {
+		this.quantity = quantity;
+	}
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
+	public Shipment(UUID shipmentId, UUID orderId, UUID warehouseId, UUID productId, Integer quantity,
+			String courierPartner, String trackingNumber, ShipmentStatus status, LocalDateTime createdAt,
+			LocalDateTime updatedAt) {
+		super();
+		this.shipmentId = shipmentId;
+		this.orderId = orderId;
+		this.warehouseId = warehouseId;
+		this.productId = productId;
+		this.quantity = quantity;
+		this.courierPartner = courierPartner;
+		this.trackingNumber = trackingNumber;
+		this.status = status;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+	}
 
-    public UUID getWarehouseId() {
-        return warehouseId;
-    }
+	private String courierPartner;
 
-    public void setWarehouseId(UUID warehouseId) {
-        this.warehouseId = warehouseId;
-    }
+	private String trackingNumber;
 
-    public String getCourierPartner() {
-        return courierPartner;
-    }
+	@Enumerated(EnumType.STRING)
+	private ShipmentStatus status;
 
-    public void setCourierPartner(String courierPartner) {
-        this.courierPartner = courierPartner;
-    }
+	private LocalDateTime createdAt;
 
-    public String getTrackingNumber() {
-        return trackingNumber;
-    }
+	private LocalDateTime updatedAt;
 
-    public void setTrackingNumber(String trackingNumber) {
-        this.trackingNumber = trackingNumber;
-    }
+	public Shipment() {
+	}
 
-    public ShipmentStatus getStatus() {
-        return status;
-    }
+		public UUID getShipmentId() {
+		return shipmentId;
+	}
 
-    public void setStatus(ShipmentStatus status) {
-        this.status = status;
-    }
+	public void setShipmentId(UUID shipmentId) {
+		this.shipmentId = shipmentId;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public UUID getOrderId() {
+		return orderId;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public void setOrderId(UUID orderId) {
+		this.orderId = orderId;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public UUID getWarehouseId() {
+		return warehouseId;
+	}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+	public void setWarehouseId(UUID warehouseId) {
+		this.warehouseId = warehouseId;
+	}
+
+	public String getCourierPartner() {
+		return courierPartner;
+	}
+
+	public void setCourierPartner(String courierPartner) {
+		this.courierPartner = courierPartner;
+	}
+
+	public String getTrackingNumber() {
+		return trackingNumber;
+	}
+
+	public void setTrackingNumber(String trackingNumber) {
+		this.trackingNumber = trackingNumber;
+	}
+
+	public ShipmentStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(ShipmentStatus status) {
+		this.status = status;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 }

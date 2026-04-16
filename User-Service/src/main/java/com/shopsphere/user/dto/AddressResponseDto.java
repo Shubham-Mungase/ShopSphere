@@ -1,18 +1,28 @@
 package com.shopsphere.user.dto;
 
+import java.util.UUID;
+
 public class AddressResponseDto {
 
-	private String userId;
+	private UUID userId;
+	private UUID id;
     private String city;
     private String state;
     private String pincode;
     private boolean isDefault;
 	
+    
 	
-	public String getUserId() {
+	public UUID getId() {
+		return id;
+	}
+	public void setId(UUID id) {
+		this.id = id;
+	}
+	public UUID getUserId() {
 		return userId;
 	}
-	public void setUserId(String userId) {
+	public void setUserId(UUID userId) {
 		this.userId = userId;
 	}
 	public String getCity() {

@@ -13,17 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shopsphere.inventory.constants.AppConstants;
-import com.shopsphere.inventory.dto.event.OrderCreatedEvent;
-import com.shopsphere.inventory.dto.event.OrderItemEvent;
-import com.shopsphere.inventory.dto.event.PaymentFailedEvent;
-import com.shopsphere.inventory.dto.event.PaymentSuccessEvent;
-import com.shopsphere.inventory.dto.event.ProductCreatedEvent;
-import com.shopsphere.inventory.dto.request.ConfirmStockRequest;
-import com.shopsphere.inventory.dto.request.ReleaseStockRequest;
-import com.shopsphere.inventory.dto.request.ReserveStockItem;
-import com.shopsphere.inventory.dto.request.ReserveStockRequest;
+import com.shopsphere.inventory.dto.event.*;
+import com.shopsphere.inventory.dto.request.*;
 import com.shopsphere.inventory.entity.Inventory;
 import com.shopsphere.inventory.entity.InventoryReservation;
+import com.shopsphere.inventory.exception.EventDeserializationException;
+import com.shopsphere.inventory.exception.InvalidEventException;
+import com.shopsphere.inventory.exception.InventoryProcessingException;
 import com.shopsphere.inventory.repo.InventoryRepo;
 import com.shopsphere.inventory.repo.InventoryReservationRepo;
 import com.shopsphere.inventory.service.InventoryReservationService;
@@ -31,194 +27,209 @@ import com.shopsphere.inventory.service.InventoryReservationService;
 @Component
 public class InventoryKafkaListener {
 
-	private final InventoryRepo inventoryRepo;
+    private static final Logger log = LoggerFactory.getLogger(InventoryKafkaListener.class);
 
-	private final InventoryReservationService reservationService;
+    private final InventoryRepo inventoryRepo;
+    private final InventoryReservationService reservationService;
+    private final ObjectMapper objectMapper;
+    private final InventoryReservationRepo reservationRepo;
 
-	
-	private final ObjectMapper objectMapper;
+    public InventoryKafkaListener(InventoryRepo inventoryRepo,
+                                  InventoryReservationService reservationService,
+                                  ObjectMapper objectMapper,
+                                  InventoryReservationRepo reservationRepo) {
+        this.inventoryRepo = inventoryRepo;
+        this.reservationService = reservationService;
+        this.objectMapper = objectMapper;
+        this.reservationRepo = reservationRepo;
+    }
 
-	private final InventoryReservationRepo reservationRepo;
-	
+    // ================= PRODUCT =================
 
-	private static final Logger log=LoggerFactory.getLogger(InventoryKafkaListener.class);
+    @KafkaListener(
+            topics = "product-events",
+            groupId = AppConstants.GROUP_ID,
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void handleProductCreated(String message) {
 
-	public InventoryKafkaListener(InventoryRepo inventoryRepo, InventoryReservationService reservationService,
-			 ObjectMapper objectMapper,
-			InventoryReservationRepo reservationRepo) {
-		super();
-		this.inventoryRepo = inventoryRepo;
-		this.reservationService = reservationService;
-		this.objectMapper = objectMapper;
-		this.reservationRepo = reservationRepo;
-	}
+        log.info("Received product event");
 
-	@KafkaListener(
-	        topics = "product-events",
-	        groupId = AppConstants.GROUP_ID,
-	        containerFactory = "kafkaListenerContainerFactory"
-	)
-	public void handleProductCreated(String message) {
+        ProductCreatedEvent createdEvent;
 
-		log.info("Event received: {}", message);
+        try {
+            createdEvent = objectMapper.readValue(message, ProductCreatedEvent.class);
+        } catch (Exception e) {
+            log.error("Failed to deserialize ProductCreatedEvent payload={}", message, e);
+            throw new EventDeserializationException("Invalid product event payload", e);
+        }
 
-	    ProductCreatedEvent createdEvent;
+        if (createdEvent == null) {
+            log.error("ProductCreatedEvent is null");
+            throw new InvalidEventException("Product event is null");
+        }
 
-	    try {
-	        createdEvent = objectMapper.readValue(message, ProductCreatedEvent.class);
-	    } catch (Exception e) {
-	        log.error("Failed to deserialize ProductCreatedEvent: " + e.getMessage());
-	        return; // stop processing
-	    }
+        if (!"PRODUCT_CREATED".equalsIgnoreCase(createdEvent.getEventType())) {
+            log.debug("Ignoring non PRODUCT_CREATED event");
+            return;
+        }
 
-	    if (createdEvent == null) {
-	        System.err.println();
-	        log.error("Received null ProductCreatedEvent");
-		       
-	        return;
-	    }
+        if (inventoryRepo.existsByProductId(createdEvent.getProductId())) {
+            log.debug("Inventory already exists for productId={}", createdEvent.getProductId());
+            return;
+        }
 
-	    // Validate event type first
-	    if (!"PRODUCT_CREATED".equalsIgnoreCase(createdEvent.getEventType())) {
-	        return; // Ignore other event types
-	    }
+        Inventory inventory = new Inventory();
+        inventory.setProductId(createdEvent.getProductId());
+        inventory.setAvailableStock(0);
+        inventory.setReservedStock(0);
+        inventory.setLowStockThreshold(5);
+        inventory.updateStatus();
+        inventory.setProductName(createdEvent.getProductName());
+        inventory.setWarehouse(null);
+        inventoryRepo.save(inventory);
 
-	    // Check if inventory already exists
-	    if (inventoryRepo.existsByProductId(createdEvent.getProductId())) {
-	        return;
-	    }
+        log.info("Inventory created for productId={}", createdEvent.getProductId());
+    }
 
-	    Inventory inventory = new Inventory();
-	    inventory.setProductId(createdEvent.getProductId());
-	    inventory.setAvailableStock(0);
-	    inventory.setReservedStock(0);
-	    inventory.setLowStockThreshold(5);
-	    inventory.updateStatus();
-	    inventory.setProductName(createdEvent.getProductName());
+    // ================= ORDER =================
 
-	    inventoryRepo.save(inventory);
+    @KafkaListener(
+            topics = "order-events",
+            groupId = AppConstants.GROUP_ID,
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void handleOrderCreated(String message) {
 
-	    System.out.println();
-	    log.info("Inventory created for productId: " + createdEvent.getProductId());
-	}
+        log.info("Received order event :"+message);
 
-	@KafkaListener(
-		    topics = "order-events",
-		    groupId = AppConstants.GROUP_ID,
-		    containerFactory = "kafkaListenerContainerFactory"
-		)
-		public void handleOrderCreated(String message) {
+        try {
 
-		    try {
+            OrderCreatedEvent event =
+                    objectMapper.readValue(message, OrderCreatedEvent.class);
 
-		        OrderCreatedEvent event =
-		                objectMapper.readValue(message, OrderCreatedEvent.class);
+            if (event == null) {
+                throw new InvalidEventException("OrderCreatedEvent is null");
+            }
 
-		        if (event == null) {
-		            throw new RuntimeException("Received null OrderCreatedEvent");
-		        }
+            log.info("Processing orderId={}", event.getOrderId());
 
-		        System.out.println("Received OrderCreatedEvent: " + event.getOrderId());
+            ReserveStockRequest request = new ReserveStockRequest();
+            List<ReserveStockItem> items = new ArrayList<>();
 
-		        ReserveStockRequest request = new ReserveStockRequest();
+            for (OrderItemEvent item : event.getItems()) {
+                ReserveStockItem stockItem = new ReserveStockItem();
+                stockItem.setProductId(item.getProductId());
+                stockItem.setQuantity(item.getQuantity());
+                items.add(stockItem);
+            }
 
-		        List<ReserveStockItem> items = new ArrayList<>();
-		        for (OrderItemEvent item : event.getItems()) {
+            request.setOrderId(event.getOrderId());
+            request.setRequests(items);
+            request.setUserId(event.getUserId());
+            request.setTotalAmount(event.getTotalAmount());
 
-		            ReserveStockItem stockItem = new ReserveStockItem();
-		            stockItem.setProductId(item.getProductId());
-		            stockItem.setQuantity(item.getQuantity());
+            reservationService.reserveStock(request);
 
-		            items.add(stockItem);
-		        }
+            log.info("Stock reserved successfully for orderId={}", event.getOrderId());
 
-		        request.setOrderId(event.getOrderId());
-		        request.setRequests(items);
-		        request.setUserId(event.getUserId());
-		        request.setTotalAmount(event.getTotalAmount());
+        } catch (InvalidEventException e) {
+            log.error("Invalid order event", e);
+            throw e;
+        } catch (Exception ex) {
+            log.error("Inventory processing failed for message={}", message, ex);
+            throw new InventoryProcessingException("Inventory processing failed", ex);
+        }
+    }
 
-		        reservationService.reserveStock(request);
+    // ================= PAYMENT =================
 
-		        System.out.println("Inventory reservation completed");
+    @KafkaListener(
+            topics = "payment-events",
+            groupId = AppConstants.GROUP_ID,
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    @Transactional
+    public void handlePaymentEvent(String message) {
 
-		    } catch (Exception ex) {
+        log.info("Received payment event");
 
-		        // VERY IMPORTANT → throw so Kafka retries
-		        throw new RuntimeException("Inventory processing failed", ex);
-		    }
-		}
-	
-	@KafkaListener(
-	        topics = "payment-events",
-	        groupId = AppConstants.GROUP_ID,
-	        containerFactory = "kafkaListenerContainerFactory"
-	)
-	@Transactional
-	public void handlePaymentEvent(String message) {
+        try {
 
-		System.out.println("RAW MESSAGE: " + message);
-	    try {
+            JsonNode rootNode = objectMapper.readTree(message);
+            String eventType = rootNode.get("eventType").asText();
+            JsonNode payloadNode = rootNode.get("payload");
 
-	        JsonNode rootNode = objectMapper.readTree(message);
-	        String eventType = rootNode.get("eventType").asText();
-	        JsonNode payloadNode = rootNode.get("payload");
+            switch (eventType) {
 
-	        switch (eventType) {
+                case "PAYMENT_SUCCESS" -> {
 
-	            case "PAYMENT_SUCCESS" -> {
+                    log.info("Processing PAYMENT_SUCCESS");
 
-	                PaymentSuccessEvent event =
-	                        objectMapper.treeToValue(payloadNode, PaymentSuccessEvent.class);
+                    PaymentSuccessEvent event =
+                            objectMapper.treeToValue(payloadNode, PaymentSuccessEvent.class);
 
-	                List<InventoryReservation> reservations =
-	                        reservationRepo.findByOrderId(event.getOrderId());
+                    List<InventoryReservation> reservations =
+                            reservationRepo.findByOrderId(event.getOrderId());
 
-	                if (reservations.isEmpty()) {
-	                    log.warn("No reservations found for order: {}", event.getOrderId());
-	                    return;
-	                }
+                    if (reservations.isEmpty()) {
+                        log.warn("No reservations found for orderId={}", event.getOrderId());
+                        return;
+                    }
 
-	                List<UUID> productIds = reservations.stream()
-	                        .map(InventoryReservation::getProductId)
-	                        .toList();
+                    List<UUID> productIds = reservations.stream()
+                            .map(InventoryReservation::getProductId)
+                            .toList();
 
-	                ConfirmStockRequest request = new ConfirmStockRequest();
-	                request.setOrderId(event.getOrderId());
-	                request.setProductIds(productIds);
+                    ConfirmStockRequest request = new ConfirmStockRequest();
+                    request.setOrderId(event.getOrderId());
+                    request.setProductIds(productIds);
 
-	                reservationService.confirmStock(request);
-	            }
+                    reservationService.confirmStock(request);
 
-	            case "PAYMENT_FAILED" -> {
+                    log.info("Stock confirmed for orderId={}", event.getOrderId());
+                }
 
-	                PaymentFailedEvent event =
-	                        objectMapper.treeToValue(payloadNode, PaymentFailedEvent.class);
+                case "PAYMENT_FAILED" -> {
 
-	                List<InventoryReservation> reservations =
-	                        reservationRepo.findByOrderId(event.getOrderId());
+                    log.info("Processing PAYMENT_FAILED");
 
-	                if (reservations.isEmpty()) {
-	                    log.warn("No reservations found for order: {}", event.getOrderId());
-	                    return;
-	                }
+                    PaymentFailedEvent event =
+                            objectMapper.treeToValue(payloadNode, PaymentFailedEvent.class);
 
-	                List<UUID> productIds = reservations.stream()
-	                        .map(InventoryReservation::getProductId)
-	                        .toList();
+                    List<InventoryReservation> reservations =
+                            reservationRepo.findByOrderId(event.getOrderId());
 
-	                ReleaseStockRequest request = new ReleaseStockRequest();
-	                request.setOrderId(event.getOrderId());
-	                request.setProductIds(productIds);
+                    if (reservations.isEmpty()) {
+                        log.warn("No reservations found for orderId={}", event.getOrderId());
+                        return;
+                    }
 
-	                reservationService.releaseStock(request);
-	            }
+                    List<UUID> productIds = reservations.stream()
+                            .map(InventoryReservation::getProductId)
+                            .toList();
 
-	            default -> log.warn("Unknown payment event type: {}", eventType);
-	        }
+                    ReleaseStockRequest request = new ReleaseStockRequest();
+                    request.setOrderId(event.getOrderId());
+                    request.setProductIds(productIds);
 
-	    } catch (Exception e) {
-	        log.error("Error processing payment event", e);
-	        throw new RuntimeException(e); // Kafka retry
-	    }
-	}
+                    reservationService.releaseStock(request);
+
+                    log.info("Stock released for orderId={}", event.getOrderId());
+                }
+
+                default -> {
+                    log.warn("Unknown payment eventType={}", eventType);
+                    throw new InvalidEventException("Unknown payment event: " + eventType);
+                }
+            }
+
+        } catch (InvalidEventException e) {
+            log.error("Invalid payment event", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing payment event payload={}", message, e);
+            throw new InventoryProcessingException("Payment event processing failed", e);
+        }
+    }
 }

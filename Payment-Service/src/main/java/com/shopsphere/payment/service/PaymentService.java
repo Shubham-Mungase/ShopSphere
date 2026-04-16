@@ -7,6 +7,10 @@ import com.shopsphere.payment.dto.PaymentResponseDto;
 
 public interface PaymentService {
 
-	public PaymentResponseDto createPayment(PaymentRequestDto request);
-	public PaymentResponseDto getPayment(UUID paymentId);
+    void createPendingPayment(PaymentRequestDto request);
+
+    PaymentResponseDto createPayment(UUID orderId,UUID userId);
+
+    PaymentResponseDto getPayment(UUID paymentId);
+
 }

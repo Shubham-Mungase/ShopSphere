@@ -8,6 +8,18 @@ public class AddStockRequest {
 	    private Integer quantity;
 
 	    private String reason;
+	    
+	    private UUID warehouseId;
+	    
+	    
+
+		public UUID getWarehouseId() {
+			return warehouseId;
+		}
+
+		public void setWarehouseId(UUID warehouseId) {
+			this.warehouseId = warehouseId;
+		}
 
 		public UUID getProductId() {
 			return productId;

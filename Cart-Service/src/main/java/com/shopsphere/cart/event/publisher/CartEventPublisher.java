@@ -2,47 +2,86 @@ package com.shopsphere.cart.event.publisher;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.shopsphere.cart.constants.AppConstants;
 import com.shopsphere.cart.document.OutboxEvent;
 import com.shopsphere.cart.enums.OutboxStatus;
+import com.shopsphere.cart.exceptions.EventPublishException;
 import com.shopsphere.cart.repo.OutboxRepository;
 
+@Component
+@Transactional
 public class CartEventPublisher {
 
-	  private final OutboxRepository outboxRepository;
-	    private final KafkaTemplate<String, String> kafkaTemplate;
+    private static final Logger log = LoggerFactory.getLogger(CartEventPublisher.class);
 
-	    public CartEventPublisher(OutboxRepository outboxRepository,
-	                           KafkaTemplate<String, String> kafkaTemplate) {
-	        this.outboxRepository = outboxRepository;
-	        this.kafkaTemplate = kafkaTemplate;
-	    }
+    private final OutboxRepository outboxRepository;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-	    @Scheduled(fixedDelay = 5000)
-	    public void publishEvents() {
+    public CartEventPublisher(OutboxRepository outboxRepository,
+                             KafkaTemplate<String, String> kafkaTemplate) {
+        this.outboxRepository = outboxRepository;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
-	        List<OutboxEvent> events = outboxRepository.findByStatus(OutboxStatus.NEW);
+    @Scheduled(fixedDelay = 5000)
+    public void publishEvents() {
 
-	        for (OutboxEvent event : events) {
+        log.info("Starting outbox event publishing job...");
 
-	            try {
+        List<OutboxEvent> events = outboxRepository.findByStatus(OutboxStatus.NEW);
 
-	                kafkaTemplate.send("checkout-topic", event.getPayload());
+        if (events.isEmpty()) {
+            log.info("No new events found in outbox");
+            return;
+        }
 
-	                event.setStatus(OutboxStatus.SENT);
+        log.info("Found {} new events to publish", events.size());
 
-	                outboxRepository.save(event);
+        for (OutboxEvent event : events) {
 
-	            } catch (Exception e) {
+            try {
 
-	                event.setStatus(OutboxStatus.FAILED);
+                log.info("Publishing event: id={}, type={}",
+                        event.getId(), event.getEventType());
 
-	                outboxRepository.save(event);
-	            }
-	        }
-	    }
-	
+                kafkaTemplate.send(AppConstants.TOPIC, event.getPayload())
+                        .whenComplete((result, ex) -> {
+
+                            if (ex == null) {
+
+                                log.info("Event published successfully: id={}", event.getId());
+
+                                event.setStatus(OutboxStatus.SENT);
+                                outboxRepository.save(event);
+
+                            } else {
+
+                                log.error("Failed to publish event: id={}", event.getId(), ex);
+
+                                event.setStatus(OutboxStatus.FAILED);
+                                outboxRepository.save(event);
+                            }
+                        });
+
+            } catch (Exception e) {
+
+                log.error("Unexpected error while publishing event: id={}", event.getId(), e);
+
+                event.setStatus(OutboxStatus.FAILED);
+                outboxRepository.save(event);
+
+                // Optional: rethrow if you want retry mechanisms outside
+                 throw new EventPublishException("Failed to publish event", e);
+            }
+        }
+
+        log.info("Outbox event publishing job completed");
+    }
 }
-

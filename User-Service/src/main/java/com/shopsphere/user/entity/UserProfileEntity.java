@@ -2,6 +2,7 @@ package com.shopsphere.user.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,11 +18,11 @@ import jakarta.persistence.Table;
 public class UserProfileEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
 	@Column(nullable = false)
-	private String userId;
+	private UUID userId;
 
 	@Column(nullable = false)
 	private String fullName;
@@ -35,19 +36,19 @@ public class UserProfileEntity {
 	@OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<AddressEntity> addresses;
 
-	public Integer getUser() {
+	public UUID getUser() {
 		return id;
 	}
 
-	public void setUser(Integer id) {
+	public void setUser(UUID id) {
 		this.id = id;
 	}
 
-	public String getUserId() {
+	public UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(UUID userId) {
 		this.userId = userId;
 	}
 

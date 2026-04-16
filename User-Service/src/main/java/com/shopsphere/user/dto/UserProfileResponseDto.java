@@ -1,17 +1,18 @@
 package com.shopsphere.user.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class UserProfileResponseDto {
 	
-	 	private String userId;
+	 	private UUID userId;
 	    private String fullName;
 	    private String phno;
 	    private LocalDateTime createdAt;
-		public String getUserId() {
+		public UUID getUserId() {
 			return userId;
 		}
-		public void setUserId(String userId) {
+		public void setUserId(UUID userId) {
 			this.userId = userId;
 		}
 		public String getFullName() {

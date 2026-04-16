@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,60 +21,41 @@ import com.shopsphere.product.service.ProductImageService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("product/{productId}/image")
+@RequestMapping("/api/product/{productId}/image")
 public class ProductImageRest {
 
-	private final ProductImageService service;
+    private final ProductImageService service;
 
-	public ProductImageRest(ProductImageService service) {
-		super();
-		this.service = service;
-	}
+    public ProductImageRest(ProductImageService service) {
+        this.service = service;
+    }
 
-	@PostMapping
-	public ResponseEntity<ProductImageResponseDto> addImage(@PathVariable UUID productId,
-			@Valid @RequestBody ProductImageRequestDto dto) {
+    // ONLY ADMIN can add images
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<ProductImageResponseDto> addImage(
+            @PathVariable UUID productId,
+            @Valid @RequestBody ProductImageRequestDto dto) {
 
-		ProductImageResponseDto productImage = service.addProductImage(productId, dto);
+        ProductImageResponseDto productImage = service.addProductImage(productId, dto);
+        return new ResponseEntity<>(productImage, HttpStatus.CREATED);
+    }
 
-		try {
-			if (productImage != null) {
-				return new ResponseEntity<ProductImageResponseDto>(productImage, HttpStatus.CREATED);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return new ResponseEntity<ProductImageResponseDto>(productImage, HttpStatus.INTERNAL_SERVER_ERROR);
+    //  ADMIN + USER can view images
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @GetMapping
+    public ResponseEntity<List<ProductImageResponseDto>> getImagesById(@PathVariable UUID productId) {
+        return ResponseEntity.ok(service.getImagesByProduct(productId));
+    }
 
-	}
+    //  ONLY ADMIN can delete images
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping
+    public ResponseEntity<Boolean> deleteImage(@PathVariable UUID productId) {
 
-	@GetMapping
-	public ResponseEntity<List<ProductImageResponseDto>> getImagesById(@PathVariable UUID productId) {
-		List<ProductImageResponseDto> imagesByProduct = service.getImagesByProduct(productId);
-		try {
-			if (imagesByProduct != null)
-				return new ResponseEntity<List<ProductImageResponseDto>>(imagesByProduct, HttpStatus.OK);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return new ResponseEntity<List<ProductImageResponseDto>>(imagesByProduct, HttpStatus.INTERNAL_SERVER_ERROR);
-
-	}
-
-	@DeleteMapping
-	public ResponseEntity<Boolean> deleteImage(@PathVariable UUID productId) {
-		
-		boolean deleteImage = service.deleteImage(productId);
-		
-		try {
-			if (deleteImage) {
-				return new ResponseEntity<Boolean>(HttpStatus.OK);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return new ResponseEntity<Boolean>(HttpStatus.INTERNAL_SERVER_ERROR);
-
-	}
+        boolean deleted = service.deleteImage(productId);
+        return deleted 
+                ? ResponseEntity.ok(true)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
+    }
 }

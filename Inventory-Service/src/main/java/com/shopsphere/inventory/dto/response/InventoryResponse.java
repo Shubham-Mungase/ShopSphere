@@ -12,7 +12,16 @@ public class InventoryResponse {
 	private Integer lowStockThreshold;
 	private InventoryStatus status;
 	private String productName;
+	private UUID warehouseId;
 	
+
+	public UUID getWarehouseId() {
+		return warehouseId;
+	}
+
+	public void setWarehouseId(UUID warehouseId) {
+		this.warehouseId = warehouseId;
+	}
 
 	public String getProductName() {
 		return productName;

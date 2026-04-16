@@ -3,37 +3,45 @@ package com.shopsphere.payment.rest;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
-import com.shopsphere.payment.dto.PaymentRequestDto;
 import com.shopsphere.payment.dto.PaymentResponseDto;
 import com.shopsphere.payment.service.PaymentService;
 
-@RestController
-@RequestMapping("/payments")
+@Controller
+@RequestMapping("/api/payments")
 public class PaymentRest {
 
 	private final PaymentService service;
 
 	public PaymentRest(PaymentService service) {
-		super();
 		this.service = service;
 	}
 
-	@PostMapping
-	public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentRequestDto request) {
+	@GetMapping("/index")
+	public String init() {
+		return "index";
+	}
 
-		return ResponseEntity.ok(service.createPayment(request));
+	// USER API (userId internal filter)
+	@PostMapping("/{orderId}")
+	public ResponseEntity<PaymentResponseDto> createPayment(@PathVariable UUID orderId, Authentication authentication) {
+
+		String userId = (String) authentication.getDetails();
+
+		return ResponseEntity.ok(service.createPayment(orderId, UUID.fromString(userId)));
+	}
+
+	// INTERNAL API (for other services)
+	@GetMapping("/internal/{paymentId}")
+	public ResponseEntity<PaymentResponseDto> getPaymentInternal(@PathVariable UUID paymentId) {
+		return ResponseEntity.ok(service.getPayment(paymentId));
 	}
 
 	@GetMapping("/{paymentId}")
 	public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable UUID paymentId) {
 		return ResponseEntity.ok(service.getPayment(paymentId));
 	}
-
 }

@@ -1,123 +1,122 @@
 package com.shopsphere.user.rest;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
-import com.shopsphere.user.dto.AddressRequestDto;
-import com.shopsphere.user.dto.AddressResponseDto;
-import com.shopsphere.user.dto.UserProfileRequestDto;
-import com.shopsphere.user.dto.UserProfileResponseDto;
-import com.shopsphere.user.dto.UserProfileSummaryDto;
+import com.shopsphere.user.dto.*;
 import com.shopsphere.user.service.UserService;
 
 import jakarta.validation.Valid;
 
-
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
+@PreAuthorize("hasAnyRole('USER','ADMIN')")
 public class UserRestController {
 
+	
+	
+	
     private final UserService userService;
 
     public UserRestController(UserService userService) {
         this.userService = userService;
     }
 
-    private String getUserId() {
-        return SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal()
-                .toString();
+    // 🔥 Extract user info from SecurityContext
+    private String getUsername(Authentication auth) {
+        return auth.getName();
     }
 
+    private UUID getUserId(Authentication auth) {
+        // we will pass userId via header also (recommended)
+        Object userId = auth.getDetails();
+        return userId != null ? UUID.fromString(userId.toString()) : null;
+    }
 
     @PostMapping("/profile")
     public ResponseEntity<UserProfileResponseDto> createProfile(
-            @RequestBody @Valid UserProfileRequestDto req) {
-    	
-    	System.out.println(req.getPhno());
+            @RequestBody @Valid UserProfileRequestDto req,
+            Authentication auth) {
 
-        return ResponseEntity.ok(
-                userService.createProfile(getUserId(), req)
-        );
+        return ResponseEntity.status(201)
+                .body(userService.createProfile(
+                        getUserId(auth),
+                        getUsername(auth),
+                        req));
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileResponseDto> getProfile() {
+    public ResponseEntity<UserProfileResponseDto> getProfile(
+            Authentication auth) {
+
         return ResponseEntity.ok(
-                userService.getProfile(getUserId())
-        );
+                userService.getProfile(getUserId(auth)));
     }
 
     @PutMapping("/profile")
     public ResponseEntity<UserProfileResponseDto> updateProfile(
-            @RequestBody @Valid UserProfileRequestDto req) {
+            @RequestBody @Valid UserProfileRequestDto req,
+            Authentication auth) {
+
         return ResponseEntity.ok(
-                userService.updateProfile(getUserId(), req)
-        );
+                userService.updateProfile(getUserId(auth), req));
     }
 
     @PostMapping("/address")
     public ResponseEntity<AddressResponseDto> addAddress(
-            @RequestBody @Valid AddressRequestDto req
-           ) {
+            @RequestBody @Valid AddressRequestDto req,
+            Authentication auth) {
 
-        return ResponseEntity.ok(
-                userService.addAddress(getUserId(), req)
-        );
+        return ResponseEntity.status(201)
+                .body(userService.addAddress(getUserId(auth), req));
     }
 
     @GetMapping("/address")
     public ResponseEntity<List<AddressResponseDto>> getAllAddress(
-            ) {
+            Authentication auth) {
 
         return ResponseEntity.ok(
-                userService.getAllAddress(getUserId())
-        );
+                userService.getAllAddress(getUserId(auth)));
     }
 
     @PutMapping("/address/{addressId}")
     public ResponseEntity<AddressResponseDto> updateAddress(
-            @PathVariable Integer addressId,
-            @RequestBody @Valid AddressRequestDto req) {
+            @PathVariable UUID addressId,
+            @RequestBody @Valid AddressRequestDto req,
+            Authentication auth) {
 
         return ResponseEntity.ok(
-                userService.updateAddress(getUserId(), addressId, req)
-        );
+                userService.updateAddress(getUserId(auth), addressId, req));
     }
 
     @PutMapping("/address/{addressId}/default")
-    public ResponseEntity<String> setDefault(
-            @PathVariable Integer addressId
-            ) {
+    public ResponseEntity<Void> setDefault(
+            @PathVariable UUID addressId,
+            Authentication auth) {
 
-        userService.setDefaultAddress(getUserId(), addressId);
-        return ResponseEntity.ok("Default address set");
+        userService.setDefaultAddress(getUserId(auth), addressId);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/address/{addressId}")
-    public ResponseEntity<String> deleteAddress(
-            @PathVariable Integer addressId
-            ) {
+    public ResponseEntity<Void> deleteAddress(
+            @PathVariable UUID addressId,
+            Authentication auth) {
 
-        userService.deleteAddress(getUserId(), addressId);
-        return ResponseEntity.ok("Address deleted");
+        userService.deleteAddress(getUserId(auth), addressId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<UserProfileSummaryDto> summary() {
+    public ResponseEntity<UserProfileSummaryDto> summary(
+            Authentication auth) {
+
         return ResponseEntity.ok(
-                userService.getUserSummary(getUserId())
-        );
+                userService.getUserSummary(getUserId(auth)));
     }
 }

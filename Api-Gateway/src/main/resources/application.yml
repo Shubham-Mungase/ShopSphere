@@ -4,15 +4,25 @@ server:
 spring:
   application:
     name: api-gateway
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 6000
 
   main:
     web-application-type: reactive
 
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 1000
+        response-timeout: 15s
+
       server:
         webflux:
           routes:
+
             - id: auth-service
               uri: lb://AUTH-SERVICE
               predicates:
@@ -22,16 +32,36 @@ spring:
               uri: lb://USER-SERVICE
               predicates:
                 - Path=/api/users/**,/api/admin/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: userServiceCB
+                    fallbackUri: forward:/fallback/user
 
+                - name: Retry
+                  args:
+                    retries: 2
+                    statuses: BAD_GATEWAY, GATEWAY_TIMEOUT
+                    
             - id: product-service
               uri: lb://PRODUCT-SERVICE
               predicates:
                 - Path=/api/product/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: productServiceCB
+                    fallbackUri: forward:/fallback/product
 
             - id: order-service
               uri: lb://ORDER-SERVICE
               predicates:
                 - Path=/api/orders/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/order
 
             - id: cart-service
               uri: lb://CART-SERVICE
@@ -46,7 +76,7 @@ spring:
             - id: payment-service
               uri: lb://PAYMENT-SERVICE
               predicates:
-                - Path=/api/payments/**
+                - Path=/api/payments/** , /api/webhook/**
 
             - id: shipping-service
               uri: lb://SHIPPING-SERVICE
@@ -57,6 +87,10 @@ spring:
               uri: lb://NOTIFICATION-SERVICE
               predicates:
                 - Path=/api/notifications/**
+
+  codec:
+    max-in-memory-size: 2MB
+
 eureka:
   client:
     service-url:
@@ -65,9 +99,56 @@ eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}
+
 logging:
   level:
     '[org.springframework.cloud.gateway]': DEBUG
     '[com.shopsphere.gateway]': DEBUG
+    '[io.github.resilience4j]': DEBUG
+
 jwt:
   secret: ABCDEFGHIJZKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()
+
+# 🔥 RESILIENCE4J CONFIG (FIXED)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        slowCallRateThreshold: 60
+        slowCallDurationThreshold: 2s
+        waitDurationInOpenState: 15s
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+    instances:
+      userServiceCB:
+        baseConfig: default
+      productServiceCB:
+        baseConfig: default
+      orderServiceCB:
+        baseConfig: default
+
+  timelimiter:
+    instances:
+      userServiceCB:
+        timeoutDuration: 15s
+      productServiceCB:
+        timeoutDuration: 15s
+      orderServiceCB:
+        timeoutDuration: 15s
+
+  retry:
+    instances:
+      userServiceRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

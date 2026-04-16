@@ -1,30 +1,33 @@
 package com.shopsphere.payment.rest;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.shopsphere.payment.service.WebHookService;
 
 @RestController
-@RequestMapping("/payments/webhook")
+@RequestMapping("/api/webhook")
 public class WebHookRest {
 
-    private final WebHookService webhookService;
+	private final WebHookService hookService;
+	
+	
+    public WebHookRest(WebHookService hookService) {
+		super();
+		this.hookService = hookService;
+	}
 
-    public WebHookRest(WebHookService webhookService) {
-        this.webhookService = webhookService;
-    }
 
-    @PostMapping
-    public ResponseEntity<Void> handleWebhook(
-            @RequestBody String rawPayload,
-            @RequestHeader("X-Signature") String signature) {
+	@PostMapping("/razorpay")
+    public ResponseEntity<String> handleWebhook(
+            @RequestBody String payload,
+            @RequestHeader(value = "X-Razorpay-Signature", required = false) String signature) {
 
-        webhookService.processWebHook(rawPayload, signature);
-        return ResponseEntity.ok().build();
+        System.out.println("Webhook received!");
+        System.out.println("Payload: " + payload);
+        System.out.println("Signature: " + signature);
+
+        hookService.processWebHook(payload, signature);
+        return ResponseEntity.ok("Webhook received");
     }
 }

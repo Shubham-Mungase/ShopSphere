@@ -1,5 +1,6 @@
 package com.shopsphere.shipping.repo;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,8 +12,13 @@ import com.shopsphere.shipping.entity.Shipment;
 @Repository
 public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
 
-    Optional<Shipment> findByOrderId(UUID orderId);
+	Optional<Shipment> findByOrderId(UUID orderId);
 
-    Optional<Shipment> findByTrackingNumber(String trackingNumber);
+	Optional<Shipment> findByTrackingNumber(String trackingNumber);
 
+	List<Shipment> findAllByOrderId(UUID orderId);
+	
+	boolean existsByOrderIdAndProductId(UUID orderId,UUID productId) ;
+
+	boolean existsByOrderId(UUID orderId);
 }

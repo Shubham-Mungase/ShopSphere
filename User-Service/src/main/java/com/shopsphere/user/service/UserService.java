@@ -1,6 +1,7 @@
 package com.shopsphere.user.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.shopsphere.user.dto.AddressRequestDto;
 import com.shopsphere.user.dto.AddressResponseDto;
@@ -10,22 +11,26 @@ import com.shopsphere.user.dto.UserProfileSummaryDto;
 
 public interface UserService {
 
-	UserProfileResponseDto createProfile(String userId, UserProfileRequestDto req);
+	UserProfileResponseDto createProfile(UUID userId,String email, UserProfileRequestDto req);
 
-	UserProfileResponseDto getProfile(String userId);
+	UserProfileResponseDto getProfile(UUID userId);
 
-	UserProfileResponseDto updateProfile(String userId, UserProfileRequestDto req);
+	UserProfileResponseDto updateProfile(UUID userId, UserProfileRequestDto req);
 
-	AddressResponseDto addAddress(String userId, AddressRequestDto req);
+	AddressResponseDto addAddress(UUID userId, AddressRequestDto req);
 
-	List<AddressResponseDto> getAllAddress(String userId);
+	List<AddressResponseDto> getAllAddress(UUID userId);
+	
+	List<UserProfileResponseDto> getAllUsers();
 
-	AddressResponseDto updateAddress(String userId, Integer addressId, AddressRequestDto req);
+	AddressResponseDto updateAddress(UUID userId, UUID addressId, AddressRequestDto req);
 
-	boolean setDefaultAddress(String userId, Integer addressId);
+	boolean setDefaultAddress(UUID userId, UUID addressId);
 
-	boolean deleteAddress(String userId, Integer addressId);
+	boolean deleteAddress(UUID userId, UUID addressId);
 
-	UserProfileSummaryDto getUserSummary(String userId);
+	boolean deleteUser(UUID userId);
+	
+	UserProfileSummaryDto getUserSummary(UUID userId);
 
 }

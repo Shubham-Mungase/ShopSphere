@@ -1,22 +1,17 @@
 package com.shopsphere.cart.rest;
 
-
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import com.shopsphere.cart.dto.checkout.CheckoutRequest;
 import com.shopsphere.cart.dto.request.AddCartItemRequest;
 import com.shopsphere.cart.dto.request.UpdateCartItemRequest;
+import com.shopsphere.cart.dto.response.ApiResponse;
 import com.shopsphere.cart.dto.response.CartResponse;
+import com.shopsphere.cart.filter.UserContext;
 import com.shopsphere.cart.service.CartService;
 
 @RestController
@@ -29,58 +24,89 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    // GET CART
-    @GetMapping("/{userId}")
-    public ResponseEntity<CartResponse> getCart(@PathVariable UUID userId) {
-
-        CartResponse response = cartService.getCart(userId);
-
-        return ResponseEntity.ok(response);
+    // 🔥 Get UserContext
+    private UserContext getUser() {
+        return (UserContext) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getDetails();
     }
 
-    // ADD ITEM
-    @PostMapping("/{userId}/items")
-    public ResponseEntity<CartResponse> addItem(
-            @PathVariable UUID userId,
+    // ✅ GET CART
+    @GetMapping
+    public ResponseEntity<ApiResponse<CartResponse>> getCart() {
+
+        UserContext user = getUser();
+        CartResponse cart = cartService.getCart(user.getUserId());
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Cart fetched successfully", cart)
+        );
+    }
+
+    // ✅ ADD ITEM
+    @PostMapping("/items")
+    public ResponseEntity<ApiResponse<CartResponse>> addItem(
             @RequestBody AddCartItemRequest request) {
 
-        CartResponse response = cartService.addItem(request, userId);
+        UserContext user = getUser();
+        CartResponse cart = cartService.addItem(request, user.getUserId());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Item added to cart", cart)
+        );
     }
 
-    // UPDATE ITEM
-    @PutMapping("/{userId}/items")
-    public ResponseEntity<CartResponse> updateItem(
-            @PathVariable UUID userId,
+    // ✅ UPDATE ITEM
+    @PutMapping("/items")
+    public ResponseEntity<ApiResponse<CartResponse>> updateItem(
             @RequestBody UpdateCartItemRequest request) {
 
-        CartResponse response = cartService.updateItem(request, userId);
+        UserContext user = getUser();
+        CartResponse cart = cartService.updateItem(request, user.getUserId());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Cart item updated", cart)
+        );
     }
 
-    @DeleteMapping("/{userId}/items/{productId}")
-    public ResponseEntity<CartResponse> removeItem(
-            @PathVariable UUID userId,
+    // ✅ REMOVE ITEM
+    @DeleteMapping("/items/{productId}")
+    public ResponseEntity<ApiResponse<CartResponse>> removeItem(
             @PathVariable UUID productId) {
 
-        return ResponseEntity.ok(cartService.removeItem(userId, productId));
+        UserContext user = getUser();
+        CartResponse cart = cartService.removeItem(user.getUserId(), productId);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Item removed from cart", cart)
+        );
     }
 
-    // CLEAR CART
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable UUID userId) {
+    // ✅ CLEAR CART
+    @DeleteMapping("/clear")
+    public ResponseEntity<ApiResponse<Void>> clearCart() {
 
-        cartService.clearCart(userId);
+        UserContext user = getUser();
+        cartService.clearCart(user.getUserId());
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Cart cleared successfully", null)
+        );
     }
+
+    // ✅ CHECKOUT
     @PostMapping("/checkout")
-    public String checkout(@RequestBody CheckoutRequest request) {
+    public ResponseEntity<ApiResponse<String>> checkout(
+            @RequestBody CheckoutRequest request) {
 
-        checkoutService.processCheckout(request);
+        UserContext user = getUser();
+        request.setUserId(user.getUserId());
 
-        return "Checkout event saved in outbox";
+        cartService.processCheckout(request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Checkout event published", "SUCCESS")
+        );
     }
 }

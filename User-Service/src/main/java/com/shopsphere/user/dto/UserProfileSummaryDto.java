@@ -1,14 +1,16 @@
 package com.shopsphere.user.dto;
 
+import java.util.UUID;
+
 public class UserProfileSummaryDto {
 	
-	 private String userId;
+	 private UUID userId;
 	    private String fullName;
 	    private String phno;
-		public String getUserId() {
+		public UUID getUserId() {
 			return userId;
 		}
-		public void setUserId(String userId) {
+		public void setUserId(UUID userId) {
 			this.userId = userId;
 		}
 		public String getFullName() {

@@ -8,6 +8,22 @@ public class PaymentWebhookRequest {
     private String orderId;
     private String status;
     private BigDecimal amount;
+    private String gatewayPaymentId;
+	private String gatewayOrderId;
+	
+	
+	public String getGatewayPaymentId() {
+		return gatewayPaymentId;
+	}
+	public void setGatewayPaymentId(String gatewayPaymentId) {
+		this.gatewayPaymentId = gatewayPaymentId;
+	}
+	public String getGatewayOrderId() {
+		return gatewayOrderId;
+	}
+	public void setGatewayOrderId(String gatewayOrderId) {
+		this.gatewayOrderId = gatewayOrderId;
+	}
 	public String getPaymentId() {
 		return paymentId;
 	}

@@ -1,5 +1,7 @@
 package com.shopsphere.user.entity;
 
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,11 +16,11 @@ import jakarta.persistence.Table;
 public class AddressEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
 	@Column(nullable = false)
-	private String userId;
+	private UUID userId;
 	
 	@Column(nullable = false)
 	private String city;
@@ -36,19 +38,19 @@ public class AddressEntity {
 	@JoinColumn(name = "user_profile_id")
 	private UserProfileEntity userProfile;
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 
-	public String getUserId() {
+	public UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(UUID userId) {
 		this.userId = userId;
 	}
 

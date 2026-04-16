@@ -14,8 +14,17 @@ public class PaymentResponseDto {
 
 	private PaymentStatus status;
 	
+	private String gatewayOrderId;
 	
 	
+
+	public String getGatewayOrderId() {
+		return gatewayOrderId;
+	}
+
+	public void setGatewayOrderId(String gatewayOrderId) {
+		this.gatewayOrderId = gatewayOrderId;
+	}
 
 	public UUID getPaymentId() {
 		return paymentId;

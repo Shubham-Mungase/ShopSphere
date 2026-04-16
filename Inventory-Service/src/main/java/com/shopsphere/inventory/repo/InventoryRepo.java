@@ -16,15 +16,21 @@ import com.shopsphere.inventory.enums.InventoryStatus;
 import jakarta.persistence.LockModeType;
 
 @Repository
-public interface InventoryRepo extends JpaRepository<Inventory, UUID>{
-      // Lock row for update (Pessimistic Lock)
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT i FROM Inventory i WHERE i.productId = :productId")
-    Optional<Inventory> findByProductIdForUpdate(@Param("productId") UUID productId);
+public interface InventoryRepo extends JpaRepository<Inventory, UUID> {
+	// Lock row for update (Pessimistic Lock)
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT i FROM Inventory i WHERE i.productId = :productId")
+	Optional<Inventory> findByProductIdForUpdate(@Param("productId") UUID productId);
 
-    List<Inventory> findByStatus(InventoryStatus status);
+	List<Inventory> findByStatus(InventoryStatus status);
 
-    Optional<Inventory> findByProductId(UUID productId);
-    boolean existsByProductId(UUID productId);
+	Optional<Inventory> findByProductId(UUID productId);
+
+	boolean existsByProductId(UUID productId);
+
+	List<Inventory> findAllByProductId(UUID productId);
+
+	@Query("SELECT i FROM Inventory i JOIN FETCH i.warehouse WHERE i.productId IN :productIds")
+	List<Inventory> findByProductIdIn(List<UUID> productIds);
 
 }

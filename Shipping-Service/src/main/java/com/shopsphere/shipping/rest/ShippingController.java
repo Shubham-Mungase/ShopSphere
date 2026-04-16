@@ -21,23 +21,25 @@ public class ShippingController {
     }
 
     
-    @PostMapping("/test/create/{orderId}/{productId}")
-    public ResponseEntity<String> createTestShipment(@PathVariable UUID orderId,@PathVariable UUID productId) {
-
-        shipmentService.createShipment(orderId,productId);
-
-        return ResponseEntity.ok("Shipment created");
-    }
+	/*
+	 * @PostMapping("/test/create/{orderId}/{productId}") public
+	 * ResponseEntity<String> createTestShipment(@PathVariable UUID
+	 * orderId,@PathVariable UUID productId) {
+	 * 
+	 * shipmentService.createShipment(orderId,productId);
+	 * 
+	 * return ResponseEntity.ok("Shipment created"); }
+	 */
     /**
      * Get shipment by orderId
      */
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<ShipmentResponse> getShipmentByOrderId(
+    public ResponseEntity< List<ShipmentResponse>> getShipmentByOrderId(
             @PathVariable UUID orderId) {
 
-        ShipmentResponse response = shipmentService.getShipmentByOrderId(orderId);
+        List<ShipmentResponse> shipmentsByOrderId = shipmentService.getShipmentsByOrderId(orderId);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(shipmentsByOrderId);
     }
 
     /**

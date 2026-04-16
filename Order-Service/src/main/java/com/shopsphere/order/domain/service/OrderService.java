@@ -11,10 +11,12 @@ public interface OrderService {
 
 	OrderResponseDto createOrder(UUID userId, CreateOrderRequestDto request);
 
-	OrderResponseDto getOrderById(UUID orderId);
+	public OrderResponseDto getOrderById(UUID orderId, UUID userId, String role);
 
 	List<OrderResponseDto> getOrdersForCurrentUser(UUID uuid);
 
-	void updateOrderStatus(UUID orderId, OrderStatus status);
+	boolean updateOrderStatus(UUID orderId, OrderStatus status);
+
+	List<OrderResponseDto> getAllOrders();
 
 }
